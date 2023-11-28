@@ -1,12 +1,16 @@
+import { Logger } from '@resourvereign/plugin-types/logger.js';
+import { PluginSchemaPropertyType } from '@resourvereign/plugin-types/plugin/index.js';
+import { NotificationsPlugin } from '@resourvereign/plugin-types/plugin/notifications.js';
+
 import { TelegramClient } from './bot/telegram.js';
 
-export const schema = {
+const schema = {
   properties: {
     token: {
-      type: 'string',
+      type: PluginSchemaPropertyType.string,
     },
     userId: {
-      type: 'uint32',
+      type: PluginSchemaPropertyType.uint32,
     },
   },
 };
@@ -16,19 +20,27 @@ type TelegramInitData = {
   userId: number;
 };
 
-type Logger = {
-  debug: (message: string) => void;
-  info: (message: string) => void;
-  warn: (message: string) => void;
-  error: (message: string) => void;
-};
-
-export const initialize = async ({ token, userId }: TelegramInitData, logger: Logger) => {
+const initialize = async ({ token, userId }: TelegramInitData, logger: Logger) => {
   return {
+    validate() {
+      logger.debug(`Starting validation`);
+      return typeof token === 'string' && typeof userId === 'number' && !!token && !!userId;
+    },
     async notify(message: string) {
-      logger.debug(`Sending notification ${message}`);
-      const telegramClient = new TelegramClient(token);
-      await telegramClient.sendMessage(userId, message);
+      try {
+        logger.debug(`Sending notification ${message}`);
+        const telegramClient = new TelegramClient(token);
+        await telegramClient.sendMessage(userId, message);
+        return true;
+      } catch (error) {
+        logger.error(`Failed to send notification: ${error}`);
+        return false;
+      }
     },
   };
 };
+
+export default {
+  schema,
+  initialize,
+} satisfies NotificationsPlugin<TelegramInitData>;
