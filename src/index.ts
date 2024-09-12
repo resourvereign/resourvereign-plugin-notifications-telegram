@@ -9,8 +9,10 @@ import { format } from 'date-fns';
 
 import { TelegramClient } from './bot/telegram.js';
 
-const token = config.get<string>('plugins.telegram.token');
-const validationTimeout = config.get<number>('plugins.telegram.validationTimeout');
+const token = process.env.TELEGRAM_TOKEN || config.get<string>('plugins.telegram.token');
+const validationTimeout =
+  Number(process.env.TELEGRAM_VALIDATION_TIMEOUT) ||
+  config.get<number>('plugins.telegram.validationTimeout');
 
 const schema: PluginSchema = {
   properties: {
